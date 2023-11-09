@@ -44,25 +44,26 @@ BVAR_estimation_NIW = function(data, lags = 4, reps = 1000, burn = 500, const = 
 
     # draw covariance
     e = Y0 - X0 %*% matrix(beta,nrow = n*L+ex, ncol = n)
-    
+
     if (TVV){
       #tvReg::bwCov(as.matrix(e))
       Sigma.hat = tvReg::tvCov( x = as.matrix(e),est = "lc", bw = 0.14)
       #sigma_tv = matrix(0, ncol = n, nrow = t_lag)
       # for (ii in 1:t_lag){
-      #   sigma_tv[ii, ] = diag(Sigma.hat[,,ii])  
-      #   
+      #   sigma_tv[ii, ] = diag(Sigma.hat[,,ii])
+      #
       # }
       #plot(y = sigma_tv[,5], x = 1:t_lag)
-      
+
       ##The mean over time of all estimates
       scale = apply(Sigma.hat, 1:2, mean)
-      
+
     } else {
-        
+
       scale = crossprod(e)
-    
+
     }
+
     sigma = MCMCpack::riwish( (t_lag + nrow(Y0)) , scale)  #flag
 
     if (i > burn) {

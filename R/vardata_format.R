@@ -9,7 +9,7 @@ vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex
     data = data[,-1]
   } else {
     print("No Time ID series identified." )
-    TimeID =  data.frame( "TimeID" = 1:(nrow(data)-lags) )
+    TimeID = NULL
   }
 
   if (!is.data.frame(data) & !is.tbl(data)) {
