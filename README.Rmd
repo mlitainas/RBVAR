@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of RBVAR is to ...
+RBVAR is a set of functions for the estimation of BVAR models
 
 ## Installation
 

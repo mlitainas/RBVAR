@@ -6,7 +6,7 @@
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of RBVAR is to …
+RBVAR is a set of functions for the estimation of BVAR models.
 
 ## Installation
 
@@ -16,4 +16,14 @@ You can install the development version of RBVAR from
 ``` r
 # install.packages("devtools")
 devtools::install_github("mlitainas/RBVAR")
+```
+
+``` r
+# 
+
+data %>% 
+  BVAR_estimation_NIW(lags = 4,reps = 2000,burn = 1000, lamda = 1, tau = 4, epsilon = 0.1 ) %>%  
+  BVAR_irf_chol()
+
+
 ```

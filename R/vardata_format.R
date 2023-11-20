@@ -1,6 +1,6 @@
-vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex = NULL, ex_lag = NULL,dummy = NULL, xlags = 0 ){
+vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex = NULL, ex_lag = NULL, dummy = NULL, xlags = 0 ){
   # data = df %>% select(NT13, lgs_pc, lgdp_pc);  lags = 2; const = T; trend = F;trend_qua = F; ex = df$TOTAL[,6]; ex_lag = df$TOTAL[,6:7]; xlags = 1
-  # Check the consistency of the inputs
+  
   # Test the data input
 
   if ( names(data)[1] %in% c("Date", "date", "Time", "time") ) {
@@ -8,7 +8,7 @@ vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex
     TimeID =  data.frame( "TimeID" = data[,1] )
     data = data[,-1]
   } else {
-    print("No Time ID series identified." )
+    print("No Time ID series identified.")
     TimeID = NULL
   }
 
@@ -93,8 +93,9 @@ vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex
   if ( !is.numeric(xlags) | !is_scalar_atomic(xlags) | !xlags%%1 == 0 | xlags < 0 ) {
     stop("Object xlags must be a positive integer greater or equal to 1")
   }
+  
   if (xlags > lags) {
-    stop("Argument 'xlags' must be lower than argument 'lag'.")
+    stop("Argument 'xlags' must be less or equal to number of 'lag'.")
   }
 
 
