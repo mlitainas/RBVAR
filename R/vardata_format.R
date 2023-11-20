@@ -222,13 +222,14 @@ vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex
       x = cbind(deterministic_block, x)
 
     }
-    } else {
+
+  } else {
 
       if( !is.null(dummy) ) {
 
           x = cbind(dummy,x)
 
-        }
+      }
 
   }
 
@@ -271,4 +272,5 @@ vardata_form = function(data , lags = 1, const = T, trend = F, trend_qua = F, ex
 
 
   return(vardata)
+
 }
