@@ -3,59 +3,43 @@ library(tidyverse)
 library(dplyr)
 library(expm)
 source("G:\\My Drive\\Chapter 3\\GVAR\\call_functions.R")
-df = readxl::read_xlsx("C:\\Users\\micha\\OneDrive\\Desktop\\SSH ProxySVAR\\Dataset.xlsx", sheet = "Dataset")
 
-data = filter(df, Date < "2020-01-01") %>% 
-  mutate(ram1 = lag(RAMEY_PCT,1),ram2 = lag(RAMEY_PCT,2), ram3 = lag(RAMEY_PCT,3),ram4 = lag(RAMEY_PCT,4),
-         ram5 = lag(RAMEY_PCT,5),ram6 = lag(RAMEY_PCT,6),ram7 = lag(RAMEY_PCT,7),ram8 = lag(RAMEY_PCT,8),
-         KILIAN_abs = abs(KILIAN),
-         HAMILTON_abs = abs(HAMILTON),
-         RAMEY_PCT_abs = abs(RAMEY_PCT),
-         RAMEY_abs = abs(RAMEY),
-         LEEPER_abs = abs(LEEPER),
-         ROMERS_abs = abs(ROMERS),
-         MR_abs = abs(MR)
-  )
-
-
-DStart = "1985-01-01"
-DEnd = "2016-01-01"
-lags = 4
+#data = readxl::read_xlsx("C:\\Users\\micha\\OneDrive\\Desktop\\MR2014_data.xlsx", sheet = "Sheet2")
+#save(data, file = "D:\\Mike Tree\\RBVAR\\data\\data.rda")
+load( file = "D:\\Mike Tree\\RBVAR\\data\\data.rda")
 
 vardata = data %>% 
-  filter(Date > DStart & Date  <  DEnd) %>% 
-  drop_na(KANZIG) %>% 
-  select(Date, s9, UR, LGDP_PC, TBILL, z = KILIAN_abs)
+  select(Date, Tax:Output,m = Tax_m)
+
+lags = 4
+m = vardata %>% select(Date, m ) 
 
 
-z = vardata %>% select(Date, z ) 
-z = as.matrix(z[-c(1:lags),2]) 
-z= z %>% abs
-
-mod = vardata %>% 
-  select(-z) %>% # print(n = Inf)
-  BVAR_estimation_NIW(lags = 4,reps = 2000,burn = 1000, lamda = 1, tau = 4, epsilon = 0.1 )
+mod = vardata %>% filter(Date > "1979-12-01") %>% 
+  select(-m) %>% # print(n = Inf)
+  BVAR_estimation_NIW(lags = 4,reps = 2000,burn = 1000, lamda = 100000, tau = 0, epsilon = 0.001, trend = T , trend_qua = T)
 
 
-mod %>% BVAR_irf_chol()
-m=z
+mod %>% BVAR_irf_chol(shock = 2,normalised = 2)
+
 BVAR_psvar_irf = function(bvar, m = NULL, hor = 20, instrumented = 1 ){
-  
-  if (is.null(z)) {
+  hor = 20
+  if (is.null(m)) {
     stop("Hey, you forgot the intrument 😕")
   }
   
-  if (any(is.na(z))) {
+  if (any(is.na(m))) {
     stop("Hey, you instrument contains NAs 😕")
   }
   
   bvar  <- mod 
-  date  <- bvar$vardata$TimeID
+  date  <- bvar$vardata$TimeID  
   res   <- bvar$res
   nlags <- bvar$vardata$number_of_lags
   nvar  <- mod$vardata$number_of_endogenous
   draws <- mod$draws
   
+  mxx = m[m$Date %in% date,   ]
   # Variable, Shock Horizon
   VSH = array(0,  list(nvar, 1, hor))
   
@@ -65,30 +49,30 @@ BVAR_psvar_irf = function(bvar, m = NULL, hor = 20, instrumented = 1 ){
   pv = rep(0,draws)
   
   for (i in 1:draws) {
-  
+  i=1
     res_temp =  res[,,i]
     dim(res_temp)
     dim(m)
       
-    #vc = crossprod(res_b)
+    
     epsilon_p = res_temp[, 1,drop =F]
-    eps_q = res_b[, -1]
+    epsilon_q = res_temp[, -1]
       
     #regress the reduced form error on the instrument
-    fit =  lm(eps_p ~  z +  lag(z,1) +  lag(z,2)  +  lag(z,3) +  lag(z,4) ) 
+    fit =  lm(epsilon_p ~  m   - 1 ) 
     u_hat_p = fit %>% fitted() %>% matrix(ncol = 1)
     sss = fit %>% summary()
     pv[i] = sss$fstatistic[1]
       
-      eps_q = eps_q[-(1:lags),]
-      # this is the correlation between the aproxximated structural shock and the n-1 residuals
-      sq_sp = solve(crossprod(u_hat_p)) %*% crossprod(u_hat_p, eps_q)
-      s = c(1, sq_sp)
+    epsilon_q = epsilon_q[-(1:nlags),]
+    # this is the correlation between the aproxximated structural shock and the n-1 residuals
+    sq_sp = solve(crossprod(u_hat_p)) %*% crossprod(u_hat_p, epsilon_q)
+    s = c(1, sq_sp)
     
-      print(paste("that is the ", i," th draw") )
+    print(paste("that is the ", i," th draw") )
       
-      CM = mod$CM[,,1]
-      HDP[, , 1] =  (CM %^% 0)[1:nvar, 1:nvar] %*% s
+    CM = mod$CM[,,1]
+    [, , 1] =  (CM %^% 0)[1:nvar, 1:nvar] %*% s
       HDP[, , 2] =   CM[1:nvar,1:nvar]   %*%  s
       
       CMhix = CM
