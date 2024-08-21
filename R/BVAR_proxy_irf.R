@@ -1,24 +1,23 @@
 BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2){
+  if (any(is.null(bvar))) {
+    stop("Provide a bvar object.")
+  }
 
-   if (any(is.null(bvar))) {
-     stop("Provide a bvar object.")
-   }
-
-   if ( !is.null(bvar$vardata$TimeID) ) {
-     print(paste("Time ID series identified for the BVAR object") )
-   } else {
-     stop("BVAR_irf_proxy requires a Time ID series during the BVAR estimation. Re-run the model providing a Date series")
-   }
+  if ( !is.null(bvar$vardata$TimeID) ) {
+    print(paste("Time ID series identified for the BVAR object") )
+  } else {
+    stop("BVAR_irf_proxy requires a Time ID series during the BVAR estimation. Re-run the model providing a Date series")
+  }
 
 
   if (is.null(m)) {
-    stop("Hey, you forgot the intrument 😕")
+    stop("Hey, you forgot the intrument \ud83d\ude15")
   }
 
   if ( names(m)[1] %in% c("Date", "date", "Time", "time") ) {
-     print(paste("Time ID series identified for the instrument") )
+    print(paste("Time ID series identified for the instrument") )
   } else {
-     stop("BVAR_irf_proxy requires a Time ID series for the instrument.")
+    stop("BVAR_irf_proxy requires a Time ID series for the instrument.")
   }
 
   # Takes care of the Date in the bvar object
@@ -34,13 +33,18 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
 
   #Takes care of the date of the instrument object
 
+  names(m)[1] = "Date"
+
+
   res   <- bvar$res
   nlags <- bvar$vardata$number_of_lags
   nvar  <- bvar$vardata$number_of_endogenous
   draws <- bvar$draws
 
   mxx = left_join(date, m )
-                # Variable, Shock Horizon
+  names(mxx)[2] = "z"
+
+  # Variable, Shock Horizon
   HDP = array(0,  list(nvar, 1, hor))
 
   # Save final IRFs for each posterior
@@ -48,11 +52,11 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
 
   pv = rep(0,draws)
 
-  z = mxx[!is.na(mxx$m),2] %>% as.matrix()
+  z = mxx[!is.na(mxx$z),2] %>% as.matrix()
 
   for (i in 1:draws) {
 
-    res_temp =  res[!is.na(mxx$m),,i]
+    res_temp =  res[!is.na(mxx$z),,i]
     # dim(res[,,1])
     # dim(z)
     # dim(bvar$vardata$y_lhs)
