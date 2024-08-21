@@ -1,21 +1,21 @@
-BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2){
+BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2) {
+
   if (any(is.null(bvar))) {
     stop("Provide a bvar object.")
   }
 
-  if ( !is.null(bvar$vardata$TimeID) ) {
-    print(paste("Time ID series identified for the BVAR object") )
+  if (!is.null(bvar$vardata$TimeID)) {
+    print(paste("Time ID series identified for the BVAR object"))
   } else {
-    stop("BVAR_irf_proxy requires a Time ID series during the BVAR estimation. Re-run the model providing a Date series")
+  stop("BVAR_irf_proxy requires a Time ID series during the BVAR estimation. Re-run the model providing a Date series")
   }
-
 
   if (is.null(m)) {
     stop("Hey, you forgot the intrument \ud83d\ude15")
   }
 
-  if ( names(m)[1] %in% c("Date", "date", "Time", "time") ) {
-    print(paste("Time ID series identified for the instrument") )
+  if (names(m)[1] %in% c("Date", "date", "Time", "time")) {
+    print(paste("Time ID series identified for the instrument"))
   } else {
     stop("BVAR_irf_proxy requires a Time ID series for the instrument.")
   }
@@ -24,24 +24,24 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
   date  <- as.data.frame(bvar$vardata$TimeID)
   names(date) = "Date"
 
-  date = date %>% separate(col = "Date", into = c("y", "m", "d"),sep = "-")
+  date = date %>% separate(col = "Date",
+                           into = c("y", "m", "d"),
+                           sep = "-")
 
   date = date %>%
-    mutate(Date = paste(y,m,d,sep = "/") ,
+    mutate(Date = paste(y, m, d, sep = "/") ,
            Date = lubridate::ymd(Date)) %>%
     select(Date)
 
   #Takes care of the date of the instrument object
-
   names(m)[1] = "Date"
-
 
   res   <- bvar$res
   nlags <- bvar$vardata$number_of_lags
   nvar  <- bvar$vardata$number_of_endogenous
   draws <- bvar$draws
 
-  mxx = left_join(date, m )
+  mxx = left_join(date, m)
   names(mxx)[2] = "z"
 
   # Variable, Shock Horizon
@@ -50,21 +50,20 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
   # Save final IRFs for each posterior
   irf = array(0, list(hor, nvar, draws))
 
-  pv = rep(0,draws)
+  pv = rep(0, draws)
 
-  z = mxx[!is.na(mxx$z),2] %>% as.matrix()
+  zz = mxx[!is.na(mxx$z), "z"] %>% as.matrix()
 
   for (i in 1:draws) {
-
-    res_temp =  res[!is.na(mxx$z),,i]
+    res_temp =  res[!is.na(mxx$z), , i]
     # dim(res[,,1])
     # dim(z)
     # dim(bvar$vardata$y_lhs)
-    epsilon_p = res_temp[, 1,drop =F]
+    epsilon_p = res_temp[, 1, drop = F]
     epsilon_q = res_temp[, -1]
 
     #regress the reduced form error on the instrument
-    fit =  lm(epsilon_p ~  z   - 1 )
+    fit =  lm(epsilon_p ~  zz   - 1)
     u_hat_p = fit %>% fitted() %>% matrix(ncol = 1)
     sss = fit %>% summary()
     pv[i] = sss$fstatistic[1]
@@ -74,16 +73,16 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
     sq_sp = solve(crossprod(u_hat_p)) %*% crossprod(u_hat_p, epsilon_q)
     s = c(1, sq_sp)
 
-    print(paste("Draw:", i, " in ",draws) )
+    print(paste("Draw:", i, " in ", draws))
     #cat(paste0(round(i / draws * 100), '% completed'))
     # Sys.sleep(.05)
     # if (i == draws) cat(': Done')
     # else cat('\014')
 
 
-    CM = bvar$CM[,,1]
+    CM = bvar$CM[, , 1]
     HDP[, , 1] =  (CM %^% 0)[1:nvar, 1:nvar] %*% s
-    HDP[, , 2] =   CM[1:nvar,1:nvar]   %*%  s
+    HDP[, , 2] =   CM[1:nvar, 1:nvar]   %*%  s
 
     CMhix = CM
 
@@ -118,18 +117,31 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
 
 
   irf_proxy <- irf_final %>%
-    pivot_longer(-Horizon,names_to = "Name", values_to = "Value" ) %>%
+    pivot_longer(-Horizon, names_to = "Name", values_to = "Value") %>%
     arrange(Name, Horizon) %>%
-    separate(Name,into = c("Variable", "Quant"), sep = ",",remove = F) %>%
-    pivot_wider(id_cols = c("Variable", "Horizon"), names_from = "Quant", values_from = "Value" ) %>%
-    mutate(Horizon = Horizon - 1,
-           Variable = factor(Variable, levels = mod$vardata$names_of_endog_variables),
-           pID = str_c(Horizon, Variable)) %>% #c("lgr","lge","ramey","lgdp", "eq"))) %>%
-    ggplot()+
-    geom_ribbon(aes(ymin = L, ymax = U, x = Horizon), alpha = 0.5)+
-    geom_line(aes(x = Horizon, y = M), color = "blue", size = 1)+
-    geom_hline(yintercept = 0, color  = "red")+
-    facet_wrap(facets = "Variable", ncol = 2, scales = "free_y")+
+    separate(
+      Name,
+      into = c("Variable", "Quant"),
+      sep = ",",
+      remove = F
+    ) %>%
+    pivot_wider(
+      id_cols = c("Variable", "Horizon"),
+      names_from = "Quant",
+      values_from = "Value"
+    ) %>%
+    mutate(
+      Horizon = Horizon - 1,
+      Variable = factor(Variable, levels = mod$vardata$names_of_endog_variables),
+      pID = str_c(Horizon, Variable)
+    ) %>% #c("lgr","lge","ramey","lgdp", "eq"))) %>%
+    ggplot() +
+    geom_ribbon(aes(ymin = L, ymax = U, x = Horizon), alpha = 0.5) +
+    geom_line(aes(x = Horizon, y = M), color = "blue", size = 1) +
+    geom_hline(yintercept = 0, color  = "red") +
+    facet_wrap(facets = "Variable",
+               ncol = 2,
+               scales = "free_y") +
     theme_minimal()
 
   return(irf_proxy)
