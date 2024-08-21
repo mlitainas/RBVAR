@@ -1,4 +1,4 @@
-BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2) {
+BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2, sign = 1) {
 
   if (any(is.null(bvar))) {
     stop("Provide a bvar object.")
@@ -136,11 +136,13 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
       pID = str_c(Horizon, Variable)
     ) %>% #c("lgr","lge","ramey","lgdp", "eq"))) %>%
     ggplot() +
-    geom_ribbon(aes(ymin = L, ymax = U, x = Horizon), alpha = 0.5) +
-    geom_line(aes(x = Horizon, y = M), color = "blue", size = 1) +
-    geom_hline(yintercept = 0, color  = "red") +
+    geom_ribbon(aes(ymin = sign*L, ymax = sign*U, x = Horizon), alpha = 0.2, color = "#B9CDD8") +
+    geom_line(aes(x = Horizon, y = sign*U), color = "#3D728E")+
+    geom_line(aes(x = Horizon, y = sign*L), color = "#3D728E")+
+    geom_line(aes(x = Horizon, y = sign*M), color = "#3D728E", size = 2) +
+    geom_hline(yintercept = 0, linetype  = "dotted") +
     facet_wrap(facets = "Variable",
-               ncol = 2,
+               ncol = pcol,
                scales = "free_y") +
     theme_minimal()
 
