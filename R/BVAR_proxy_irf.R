@@ -25,7 +25,7 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
 
   date  <- as.data.frame(bvar$vardata$TimeID)
 
-  date = date %>% separate(col = "Date", into = c("y", "m", "d"),sep = "-")
+  date = date %>% separate(col = "TimeID", into = c("y", "m", "d"),sep = "-")
 
   date = date %>%
     mutate(Date = paste(y,m,d,sep = "/") ,
