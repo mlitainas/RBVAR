@@ -1,21 +1,33 @@
-BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 ){
-  # bvar = mod
-  # m = mdf
-  # hor = 20
+BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2){
+   bvar = mod
+   m = mdf
+   hor = 20
+
+   if (any(is.null(bvar))) {
+     stop("Provide a bvar object.")
+   }
+
+   if ( !is.null(bvar$vardata$TimeID) ) {
+     print(paste("Time ID series identified for the BVAR object") )
+   } else {
+     stop("BVAR_irf_proxy requires a Time ID series during the BVAR estimation. Re-run the model providing a Date series")
+   }
+
 
   if (is.null(m)) {
     stop("Hey, you forgot the intrument 😕")
   }
 
-  if (any(is.na(m))) {
-    stop("Hey, you instrument contains NAs 😕")
+  if ( names(m)[1] %in% c("Date", "date", "Time", "time") ) {
+     print(paste("Time ID series identified for the instrument") )
+  } else {
+     stop("BVAR_irf_proxy requires a Time ID series for the instrument.")
   }
 
-  if (any(is.null(bvar))) {
-    stop("Insert a bvar object.")
-  }
+
 
   date  <- as.data.frame(bvar$vardata$TimeID)
+
   date = date %>% separate(col = "Date", into = c("y", "m", "d"),sep = "-")
 
   date = date %>%
@@ -59,7 +71,7 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 ){
     sq_sp = solve(crossprod(u_hat_p)) %*% crossprod(u_hat_p, epsilon_q)
     s = c(1, sq_sp)
 
-    print(paste("that is the ", i," th draw") )
+    print(paste("Draw:", i, " in ",draws) )
 
     CM = bvar$CM[,,1]
     HDP[, , 1] =  (CM %^% 0)[1:nvar, 1:nvar] %*% s

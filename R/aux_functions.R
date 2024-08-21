@@ -17,21 +17,30 @@ quantL = function(df, CI = 16){
   return(l)
 }
 
-residuals = function(bvar, measure = "median" ){
-  
+residuals = function(bvar, measure = "median", graph = F ){
+  Date = bvar$vardata$TimeID
   n = bvar$vardata$number_of_variables
   t = nrow(bvar$vardata$y_lhs)
   draws = bvar$draws
   res = bvar$res
   residuals = as.data.frame(matrix(0,nrow = t, ncol = n ))
-  
+
   for (i in 1:n) {
     residuals[,i] =  apply( as.data.frame(res[,i,1:draws]), 1, median)
     names(residuals)[i] <- bvar$vardata$names_of_endogenous[i]
   }
-  
+
+  if(graph){
+
+
+  } else {
   #residuals = cbind(Date, residuals)
   return(residuals)
+  }
 
 }
+
+
+
+
 
