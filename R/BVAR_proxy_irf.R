@@ -21,7 +21,7 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
      stop("BVAR_irf_proxy requires a Time ID series for the instrument.")
   }
 
-
+  # Takes care of the Date in the bvar object
   date  <- as.data.frame(bvar$vardata$TimeID)
   names(date) = "Date"
 
@@ -31,6 +31,8 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
     mutate(Date = paste(y,m,d,sep = "/") ,
            Date = lubridate::ymd(Date)) %>%
     select(Date)
+
+  #Takes care of the date of the instrument object
 
   res   <- bvar$res
   nlags <- bvar$vardata$number_of_lags
