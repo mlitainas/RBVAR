@@ -1,7 +1,4 @@
 BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pcol = 2){
-   bvar = mod
-   m = mdf
-   hor = 20
 
    if (any(is.null(bvar))) {
      stop("Provide a bvar object.")
@@ -72,6 +69,11 @@ BVAR_irf_proxy = function(bvar = NULL, m = NULL, hor = 20, instrumented = 1 , pc
     s = c(1, sq_sp)
 
     print(paste("Draw:", i, " in ",draws) )
+    #cat(paste0(round(i / draws * 100), '% completed'))
+    # Sys.sleep(.05)
+    # if (i == draws) cat(': Done')
+    # else cat('\014')
+
 
     CM = bvar$CM[,,1]
     HDP[, , 1] =  (CM %^% 0)[1:nvar, 1:nvar] %*% s
